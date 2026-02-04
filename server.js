@@ -10,8 +10,24 @@ app.use(express.static("public"));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+function sendUserCount() {
+    const count = wss.clients.size;
+
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+                type: "userCount",
+                count: count
+            }));
+        }
+    });
+}
+
+
 wss.on("connection", (socket) => {
     console.log("Client Connected");
+
+    sendUserCount();
 
     socket.on("message", (data) => {
         wss.clients.forEach(client => {
@@ -20,6 +36,11 @@ wss.on("connection", (socket) => {
             }
         });
     });
+
+    socket.on("close", () => {
+        sendUserCount();
+    });
+
 });
 
 server.listen(PORT, () => {

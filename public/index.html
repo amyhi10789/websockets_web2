@@ -11,6 +11,8 @@
     <h1>Enter your username:</h1>
     <input id="username" placeholder="Type your username" />
 
+    <h2 id="userCount">Users online: 0</h2>
+
     <h1>Live Messages</h1>
     <input id="msg" placeholder="Type a message" />
     <ul id="messages"></ul>
@@ -18,11 +20,25 @@
     <script>
         const socket = new WebSocket(location.origin.replace("http", "ws"));
 
+        const userCountEl = document.getElementById("userCount");
+        const messages = document.getElementById("messages");
+        const msg = document.getElementById("msg");
+
         socket.onmessage = (event) => {
-            const li = document.createElement("li");
-            li.textContent = event.data;
-            messages.appendChild(li);
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.type === "userCount") {
+                    userCountEl.textContent = `Users online: ${data.count}`;
+                    return;
+                }
+            } catch {
+                const li = document.createElement("li");
+                li.textContent = event.data;
+                messages.appendChild(li);
+            }
         };
+
 
         msg.addEventListener("keydown", e => {
             if (e.key === "Enter") {
@@ -31,30 +47,6 @@
                 msg.value = "";
             }
         });
-
-        let typingTimeout;
-
-        msg.addEventListener("input", () => {
-            socket.send(JSON.stringify({
-                type: "typing",
-                username: username.value
-            }));
-
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                socket.send(JSON.stringify({
-                    type: "stopTyping",
-                    username: username.value
-                }));
-            }, 1000);
-        });
-
-
-        username.addEventListener("keydown", e => {
-            if (e.key === "Enter") {
-                username.value = "";
-            }
-        })
     </script>
 </body>
 
