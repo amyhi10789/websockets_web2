@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Sockets Demo</title>
+</head>
+
+<body>
+    <h1>Enter your username:</h1>
+    <input id="username" placeholder="Type your username" />
+
+    <h1>Live Messages</h1>
+    <input id="msg" placeholder="Type a message" />
+    <ul id="messages"></ul>
+
+    <script>
+        const socket = new WebSocket(location.origin.replace("http", "ws"));
+
+        socket.onmessage = (event) => {
+            const li = document.createElement("li");
+            li.textContent = event.data;
+            messages.appendChild(li);
+        };
+
+        msg.addEventListener("keydown", e => {
+            if (e.key === "Enter") {
+                const usernameInput = document.getElementById("username").value;
+                socket.send(usernameInput + ": " + msg.value);
+                msg.value = "";
+            }
+        });
+
+        let typingTimeout;
+
+        msg.addEventListener("input", () => {
+            socket.send(JSON.stringify({
+                type: "typing",
+                username: username.value
+            }));
+
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                socket.send(JSON.stringify({
+                    type: "stopTyping",
+                    username: username.value
+                }));
+            }, 1000);
+        });
+
+
+        username.addEventListener("keydown", e => {
+            if (e.key === "Enter") {
+                username.value = "";
+            }
+        })
+    </script>
+</body>
+
+</html>
